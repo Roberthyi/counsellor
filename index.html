@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직장인 감정 분석 및 솔루션 제안</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: 본 앱은 '고통'과 '즐거움'이라는 두 가지 핵심 감정을 탭으로 구분하는 대시보드 구조를 채택했습니다. 사용자는 먼저 감정의 맥락을 선택하고, 그에 따라 관련 데이터(장소, 시간, 원인)와 해결책(소셜 활동, 소비, AI 도구)을 한눈에 탐색할 수 있습니다. 이는 사용자가 정보를 단순히 수동적으로 읽는 것이 아니라, 감정의 원인과 해결책을 능동적으로 연결하며 탐색하도록 유도하기 위함입니다. 각 섹션은 명확한 제목과 설명으로 구성되어 사용자의 이해를 돕습니다. -->
+    <!-- Visualization & Content Choices: '장소', '시간', '연령' 데이터는 비율과 분포를 비교하는 것이 목표이므로 Chart.js를 사용한 막대그래프와 도넛 차트로 시각화했습니다. '원인'과 '솔루션' 같은 텍스트 기반 정보는 카드 레이아웃을 사용해 가독성과 정보 구분을 용이하게 했습니다. 'AI 도구' 섹션은 실제 기능의 프로토타입을 제시하여 아이디어의 구체적인 활용 방안을 보여줍니다. 모든 시각화는 사용자의 상호작용(탭 전환)에 따라 동적으로 업데이트됩니다. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F8F9FA;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tab-button.active {
+            border-color: #4F46E5;
+            background-color: #EEF2FF;
+            color: #4338CA;
+            font-weight: 700;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease;
+        }
+        .accordion-header {
+            cursor: pointer;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .accordion-item.open .accordion-content {
+            max-height: 1000px; /* Or a sufficiently large value */
+        }
+        .accordion-item.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">직장인 감정 지도</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">하루의 일상 속, 직장인이 경험하는 감정의 흐름을 분석하고 개인 맞춤형 솔루션을 제안하는 대화형 리포트입니다.</p>
+        </header>
+
+        <div class="mb-8">
+            <div class="flex justify-center border-b border-gray-200">
+                <button id="pain-tab" class="tab-button text-lg px-6 py-3 border-b-2 border-transparent transition">😥 고통</button>
+                <button id="joy-tab" class="tab-button text-lg px-6 py-3 border-b-2 border-transparent transition">😊 즐거움</button>
+            </div>
+        </div>
+        
+        <main id="content-area">
+            <!-- Content will be dynamically inserted here -->
+        </main>
+        
+        <section id="technical-guidance" class="mt-16">
+            <h2 class="text-3xl font-bold text-center mb-8">AI 챗봇 제작 및 배포 가이드</h2>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="accordion-item bg-white rounded-lg shadow">
+                    <div class="accordion-header flex justify-between items-center p-5">
+                        <h3 class="font-semibold text-lg">AI Studio vs NotebookLM: 어떤 도구를 써야 할까요?</h3>
+                        <svg class="accordion-icon w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content px-5 pb-5 text-gray-600">
+                        <p class="mb-2">두 도구는 목적이 다릅니다. 이 프로젝트에는 두 가지 모두, 혹은 목적에 맞게 선택하여 사용할 수 있습니다.</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Google AI Studio:</strong> 챗봇의 '두뇌'를 만들고 테스트하기에 최적입니다. 프롬프트를 설계하고, 챗봇의 말투, 역할, 응답 방식을 빠르게 프로토타이핑할 수 있습니다. '명상 스크립트 생성', '사용자 질문 유도 프롬프트' 등을 여기서 만들고 테스트하는 것이 효율적입니다. API 키를 발급받아 지금 보고 계신 이런 웹 앱에 연동할 수 있습니다.</li>
+                            <li><strong>NotebookLM:</strong> 제공된 자료(연구 논문, 보고서 등)에 기반하여 답변하는 '연구 보조 AI'입니다. "OOO 연구 논문에 따르면 직장인 고통의 원인은 무엇이야?"와 같은 질문에 정확한 답변을 얻는 데 특화되어 있습니다. 챗봇이 제공할 정보의 '지식 베이스'를 구축하고 사실 확인을 하는 데 사용하면 좋습니다.</li>
+                            <li><strong>결론:</strong> <strong>AI Studio</strong>로 챗봇의 대화 능력을 만들고, <strong>NotebookLM</strong>으로 챗봇이 참고할 전문 지식 소스를 관리하는 하이브리드 방식이 가장 이상적입니다.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow">
+                    <div class="accordion-header flex justify-between items-center p-5">
+                        <h3 class="font-semibold text-lg">HTML/CSS/JS vs Python: 어떤 기술 스택이 나을까요?</h3>
+                         <svg class="accordion-icon w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content px-5 pb-5 text-gray-600">
+                        <p class="mb-2"><strong>결론부터 말하면, HTML/CSS/JS 방식이 압도적으로 유리합니다.</strong></p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>접근성 및 배포:</strong> HTML/CSS/JS로 만든 웹 앱은 URL만 있으면 누구나, 어떤 기기(PC, 모바일, 태블릿)에서든 바로 사용할 수 있습니다. Python 실행 파일(.exe)은 사용자가 직접 다운로드하고 설치해야 하는 허들이 있으며, 특정 운영체제(예: Windows)에서만 작동합니다.</li>
+                            <li><strong>상호작용 및 UI:</strong> 지금 보고 계신 화면처럼 동적인 차트, 부드러운 애니메이션, 세련된 UI를 구현하는 데 웹 기술이 훨씬 강력하고 효율적입니다.</li>
+                             <li><strong>확장성:</strong> 웹 앱은 Google AI Studio 등 다양한 외부 서비스(API)와 연동하기가 매우 쉽습니다. Python으로 UI를 만들고 외부 서비스와 연동하는 것은 훨씬 복잡합니다.</li>
+                        </ul>
+                         <p class="mt-3 font-semibold">따라서 사용자와의 상호작용이 중요한 챗봇 애플리케이션은 웹 기술(HTML, CSS, JavaScript)로 제작하는 것이 표준적인 접근 방식입니다.</p>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow">
+                    <div class="accordion-header flex justify-between items-center p-5">
+                        <h3 class="font-semibold text-lg">HTML/CSS/JS 앱 배포 방법</h3>
+                         <svg class="accordion-icon w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content px-5 pb-5 text-gray-600">
+                        <p class="mb-2">완성된 HTML 파일을 전 세계인이 접속할 수 있도록 배포하는 간편한 무료 서비스들이 많습니다.</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                           <li><strong>GitHub Pages:</strong> 가장 대중적인 방법입니다.
+                                <ul class="list-disc list-inside ml-4">
+                                    <li>코드를 저장하는 공간인 '저장소(repository)'를 GitHub에 만듭니다.</li>
+                                    <li>이 HTML 파일을 `index.html` 이라는 이름으로 저장소에 올립니다.</li>
+                                    <li>저장소 설정에서 'Pages' 메뉴를 찾아 배포를 활성화하면, 몇 분 안에 `사용자이름.github.io/저장소이름` 형태의 주소가 생성됩니다.</li>
+                                </ul>
+                           </li>
+                           <li><strong>Netlify / Vercel:</strong> 좀 더 전문적이고 빠른 배포를 원할 때 사용합니다. GitHub 계정과 연동하여 저장소에 코드를 올리기만 하면 자동으로 배포되는 편리한 기능을 제공합니다.</li>
+                        </ol>
+                         <p class="mt-3">이러한 서비스를 이용하면 서버를 직접 관리할 필요 없이 간편하게 웹 애플리케이션을 배포하고 운영할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="text-center mt-16 text-gray-500">
+            <p>&copy; 2025 Interactive Report Prototype. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const painData = {
+            title: "😥 직장인이 느끼는 고통",
+            themeColor: '#EF4444',
+            lightThemeColor: 'rgba(239, 68, 68, 0.2)',
+            charts: {
+                place: {
+                    labels: ['사무실', '출퇴근길 대중교통', '회의실', '집'],
+                    values: [65, 20, 10, 5],
+                    title: '고통을 느끼는 장소'
+                },
+                time: {
+                    labels: ['월요일 오전', '퇴근 직전', '오후 2-4시', '야근 시간'],
+                    values: [40, 30, 20, 10],
+                    title: '고통을 느끼는 시간'
+                },
+                age: {
+                    labels: ['20대 후반', '30대 초반', '40대', '50대 이상'],
+                    values: [35, 45, 15, 5],
+                    title: '고통을 느끼는 연령대'
+                }
+            },
+            causes: [
+                { icon: '👥', title: '과도한 업무와 압박감', description: '마감 기한, 높은 성과 요구, 업무량 과다' },
+                { icon: '🗣️', title: '상사/동료와의 갈등', description: '불합리한 지시, 소통 부재, 의견 충돌' },
+                { icon: '📉', title: '성장 정체와 불확실한 미래', description: '반복적인 업무, 커리어에 대한 불안감' },
+                { icon: '💻', title: '장시간 근무 및 휴식 부족', description: '잦은 야근, 부족한 휴식 시간' }
+            ],
+            solutions: {
+                title: "고통을 줄이는 솔루션",
+                items: [
+                    { category: '소비 행동', item: '달콤한 간식/음료', icon: '🍩' },
+                    { category: '소비 행동', item: '소소한 쇼핑 (나를 위한 선물)', icon: '🎁' },
+                    { category: '전화 통화', item: '가족/친한 친구', icon: '📞' },
+                    { category: 'SNS 활동', item: '유머/동물 영상 시청', icon: '😂' },
+                    { category: '사회적 관계', item: '업무와 무관한 동료와 짧은 수다', icon: '💬' },
+                    { category: '사회적 관계', item: '퇴근 후 취미 동아리 활동', icon: '🎨' },
+                    { category: '개인 활동', item: '가벼운 산책 또는 스트레칭', icon: '🚶' },
+                    { category: '전문가 도움', item: '심리 상담사와의 대화', icon: '👩‍⚕️' }
+                ]
+            },
+            aiTools: {
+                meditation: {
+                    title: "업무 스트레스 완화 명상",
+                    script: "잠시 눈을 감고 숨을 깊게 들이마셔 봅니다. 오늘 하루 무거웠던 책임감과 스트레스를 숨과 함께 밖으로 내보낸다고 상상하세요. 당신은 충분히 잘 해내고 있습니다..."
+                },
+                imagePrompt: {
+                    title: "지친 나를 위한 위로의 이미지",
+                    prompt: "사실적인 화풍, 따뜻한 색감의 아늑한 방 안, 창가에는 부드러운 저녁 햇살이 비치고, 푹신한 소파에 앉아 김이 나는 차를 마시며 창밖을 바라보는 한 사람의 뒷모습, 평온함과 위로가 느껴지는 분위기"
+                },
+                chatbotPrompt: "오늘 회사에서 어떤 일 때문에 가장 힘드셨나요? 구체적으로 이야기해주시면 더 깊이 공감하고 해결책을 찾는 데 도움이 될 수 있어요."
+            }
+        };
+
+        const joyData = {
+            title: "😊 직장인이 느끼는 즐거움",
+            themeColor: '#22C55E',
+            lightThemeColor: 'rgba(34, 197, 94, 0.2)',
+            charts: {
+                place: {
+                    labels: ['카페/휴게실', '퇴근길', '동료와 함께하는 점심식사', '집'],
+                    values: [40, 25, 20, 15],
+                    title: '즐거움을 느끼는 장소'
+                },
+                time: {
+                    labels: ['금요일 오후', '점심시간', '월급날', '업무 성공 직후'],
+                    values: [50, 25, 15, 10],
+                    title: '즐거움을 느끼는 시간'
+                },
+                age: {
+                    labels: ['20대', '30대', '40대', '50대 이상'],
+                    values: [40, 35, 20, 5],
+                    title: '즐거움을 느끼는 연령대'
+                }
+            },
+            causes: [
+                { icon: '🏆', title: '업무 성취 및 인정', description: '프로젝트 성공, 칭찬, 긍정적 피드백' },
+                { icon: '☕', title: '동료와의 유대감', description: '함께하는 점심, 커피타임, 사적인 대화' },
+                { icon: '💰', title: '금전적 보상', description: '월급, 보너스, 성과급' },
+                { icon: '🌿', title: '휴식과 재충전', description: '짧은 휴식, 휴가, 퇴근 후 개인 시간' }
+            ],
+            solutions: {
+                title: "즐거움을 공유하고 증폭시키는 방법",
+                items: [
+                    { category: '소비 행동', item: '동료에게 커피 사기', icon: '☕' },
+                    { category: '소비 행동', item: '맛집 탐방/회식', icon: '🍽️' },
+                    { category: '전화 통화', item: '연인/배우자에게 자랑하기', icon: '📱' },
+                    { category: 'SNS 활동', item: '성취 관련 게시물 공유 (#오운완 #성공적)', icon: '📸' },
+                    { category: '사회적 관계', item: '가족과 외식하며 이야기 나누기', icon: '👨‍👩‍👧‍👦' },
+                    { category: '사회적 관계', item: '팀원들과 성과 자축하기', icon: '🎉' },
+                    { category: '개인 활동', item: '운동으로 에너지 발산', icon: '🏃' },
+                    { category: '개인 활동', item: '성취의 순간을 일기에 기록', icon: '✍️' }
+                ]
+            },
+            aiTools: {
+                meditation: {
+                    title: "성취감을 만끽하는 감사 명상",
+                    script: "당신이 이뤄낸 멋진 성과를 떠올려보세요. 그 과정에서의 노력을 칭찬하고, 결과를 마음껏 즐기세요. 이 긍정적인 에너지가 당신의 내일을 더욱 빛나게 할 것입니다..."
+                },
+                imagePrompt: {
+                    title: "성공의 순간을 담은 이미지",
+                    prompt: "사실적인 화풍, 여러 사람이 사무실에서 환하게 웃으며 하이파이브를 하고 있다. 창문으로 밝은 햇살이 쏟아져 들어오고, 화이트보드에는 성공적인 프로젝트 결과가 적혀있다. 역동적이고 기쁨에 찬 분위기"
+                },
+                chatbotPrompt: "오늘 어떤 멋진 일을 해내셨나요? 그 성취의 기쁨을 함께 나누고 싶어요! 누구와 이 기쁨을 나누면 더 행복할까요?"
+            }
+        };
+        
+        const contentArea = document.getElementById('content-area');
+        let charts = {};
+
+        function renderContent(data) {
+            contentArea.innerHTML = `
+                <div class="space-y-12">
+                    <section id="data-visualization">
+                        <h2 class="text-3xl font-bold text-center mb-2">${data.title} 분석</h2>
+                        <p class="text-center text-gray-600 mb-8">데이터를 통해 ${data.title.includes('고통') ? '고통' : '즐거움'}의 주요 패턴을 확인합니다.</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4 text-center">${data.charts.place.title}</h3>
+                                <div class="chart-container"><canvas id="placeChart"></canvas></div>
+                            </div>
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4 text-center">${data.charts.time.title}</h3>
+                                <div class="chart-container"><canvas id="timeChart"></canvas></div>
+                            </div>
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4 text-center">${data.charts.age.title}</h3>
+                                <div class="chart-container"><canvas id="ageChart"></canvas></div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <section id="causes" class="section-card p-6">
+                            <h3 class="text-2xl font-bold mb-4">주요 원인</h3>
+                            <div class="space-y-4">
+                                ${data.causes.map(cause => `
+                                    <div class="flex items-start">
+                                        <span class="text-2xl mr-4">${cause.icon}</span>
+                                        <div>
+                                            <h4 class="font-semibold">${cause.title}</h4>
+                                            <p class="text-gray-600">${cause.description}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <section id="solutions" class="section-card p-6">
+                            <h3 class="text-2xl font-bold mb-4">${data.solutions.title}</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                ${data.solutions.items.map(sol => `
+                                    <div class="bg-gray-50 p-3 rounded-lg flex items-center">
+                                        <span class="text-xl mr-3">${sol.icon}</span>
+                                        <div>
+                                            <p class="text-sm text-gray-500">${sol.category}</p>
+                                            <p class="font-medium">${sol.item}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                    </div>
+
+                     <section id="ai-tools">
+                        <h2 class="text-3xl font-bold text-center mb-8">AI 기반 맞춤형 솔루션</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4">✨ 명상 스크립트</h3>
+                                <p class="text-gray-600 mb-4 text-sm">${data.aiTools.meditation.title}</p>
+                                <p class="bg-indigo-50 p-4 rounded-md text-gray-700 italic">"${data.aiTools.meditation.script}"</p>
+                            </div>
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4">🎨 이미지 생성 프롬프트</h3>
+                                <p class="text-gray-600 mb-4 text-sm">${data.aiTools.imagePrompt.title}</p>
+                                <textarea readonly class="w-full h-32 bg-gray-50 p-2 border rounded-md text-sm text-gray-700">${data.aiTools.imagePrompt.prompt}</textarea>
+                            </div>
+                            <div class="section-card p-6">
+                                <h3 class="font-bold text-xl mb-4">💬 챗봇 대화 시작하기</h3>
+                                <p class="text-gray-600 mb-4 text-sm">챗봇에게 이렇게 물어보세요.</p>
+                                <p class="bg-green-50 p-4 rounded-md text-green-800 font-medium">"${data.aiTools.chatbotPrompt}"</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            `;
+            
+            renderCharts(data);
+        }
+
+        function renderCharts(data) {
+            Object.values(charts).forEach(chart => chart.destroy());
+
+            charts.placeChart = new Chart(document.getElementById('placeChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.charts.place.labels,
+                    datasets: [{
+                        label: data.charts.place.title,
+                        data: data.charts.place.values,
+                        backgroundColor: data.lightThemeColor,
+                        borderColor: data.themeColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            charts.timeChart = new Chart(document.getElementById('timeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.charts.time.labels,
+                    datasets: [{
+                        data: data.charts.time.values,
+                        backgroundColor: [
+                            data.themeColor,
+                            'rgba(75, 85, 99, 0.7)',
+                            'rgba(156, 163, 175, 0.7)',
+                            'rgba(209, 213, 219, 0.7)'
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                    }
+                }
+            });
+
+            charts.ageChart = new Chart(document.getElementById('ageChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.charts.age.labels,
+                    datasets: [{
+                        label: data.charts.age.title,
+                        data: data.charts.age.values,
+                        backgroundColor: data.lightThemeColor,
+                        borderColor: data.themeColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const painTab = document.getElementById('pain-tab');
+            const joyTab = document.getElementById('joy-tab');
+
+            function setActiveTab(tab) {
+                if (tab === 'pain') {
+                    painTab.classList.add('active');
+                    joyTab.classList.remove('active');
+                    renderContent(painData);
+                } else {
+                    joyTab.classList.add('active');
+                    painTab.classList.remove('active');
+                    renderContent(joyData);
+                }
+            }
+            
+            painTab.addEventListener('click', () => setActiveTab('pain'));
+            joyTab.addEventListener('click', () => setActiveTab('joy'));
+            
+            // Initial render
+            setActiveTab('pain');
+
+            // Accordion logic
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', event => {
+                    const accordionItem = header.parentElement;
+                    accordionItem.classList.toggle('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
